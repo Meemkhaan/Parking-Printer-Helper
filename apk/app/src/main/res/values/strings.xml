@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Parking Printer Helper</string>
+    <string name="print_secret" translatable="false">changeme-set-via-build-config</string>
+</resources>
