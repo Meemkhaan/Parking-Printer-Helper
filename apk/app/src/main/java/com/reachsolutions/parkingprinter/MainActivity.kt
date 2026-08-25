@@ -11,15 +11,12 @@ import android.widget.Button
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
@@ -28,7 +25,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvLog: TextView
     private lateinit var scrollView: ScrollView
     private val client = OkHttpClient()
-    private val gson = com.google.gson.Gson()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -104,7 +100,7 @@ class MainActivity : AppCompatActivity() {
         val timestamp = java.text.SimpleDateFormat("HH:mm:ss").format(java.util.Date())
         runOnUiThread {
             tvLog.append("\n[$timestamp] $msg")
-            tvLog.post { tvLog.fullScroll(ScrollView.FOCUS_DOWN) }
+            tvLog.post { tvLog.fullScroll(View.FOCUS_DOWN) }
         }
         Log.d("ParkingPrinter", msg)
     }

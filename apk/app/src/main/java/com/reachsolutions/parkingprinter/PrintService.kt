@@ -30,8 +30,6 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.URL
 import java.util.Date
-import java.net.HttpURLConnection
-import java.nio.charset.StandardCharsets
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -50,7 +48,6 @@ class PrintService : Service() {
     private val usbDeviceRef = AtomicReference<UsbDevice?>(null)
     private val usbConnectionRef = AtomicReference<UsbDeviceConnection?>(null)
     private val usbEndpointRef = AtomicReference<UsbEndpoint?>(null)
-    private val secret = BuildConfig.PRINT_HELPER_SECRET
     private val executor = Executors.newSingleThreadExecutor()
     private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private val logHandler = Handler(Looper.getMainLooper())
@@ -296,11 +293,11 @@ class PrintService : Service() {
             return false
         }
         return try {
-            openUsbConnection(device).use { conn ->
+            openUsbConnection(device)?.use { conn ->
                 val (iface, ep) = findBulkOut(device) ?: return@use false
                 conn.claimInterface(iface, true)
                 conn.bulkTransfer(ep, data, data.size, 5000) >= 0
-            }
+            } ?: false
         } catch (e: Exception) {
             false
         }
@@ -335,7 +332,7 @@ class PrintService : Service() {
         val manager = usbManagerRef.get() ?: return
         val intent = Intent("com.reachsolutions.parkingprinter.USB_PERMISSION")
         val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
-        manager.requestPermission(device, intent)
+        manager.requestPermission(device, pendingIntent)
     }
 
     private fun sendToPrinterLan(data: ByteArray) {
@@ -364,10 +361,10 @@ class PrintService : Service() {
         data.write("PARKING RECEIPT\n".toByteArray())
         data.write("--------------------------------\n".toByteArray())
         data.write(0x1B); data.write(0x61); data.write(0x00)
-        data.write("Ticket : $ticket\n".toByteArray())
-        data.write("Vehicle: $vehicle\n".toByteArray())
-        data.write("Number : $number\n".toByteArray())
-        data.write("Amount : Rs. ${"%.2f".format(amount)}\n".toByteArray())
+        data.write("Ticket : ${payload.get("ticket")?.asString ?: ""}\n".toByteArray())
+        data.write("Vehicle: ${payload.get("vehicle")?.asString ?: ""}\n".toByteArray())
+        data.write("Number : ${payload.get("number")?.asString ?: ""}\n".toByteArray())
+        data.write("Amount : Rs. ${"%.2f".format(payload.get("amount")?.asDouble ?: 0.0)}\n".toByteArray())
         data.write("--------------------------------\n".toByteArray())
         data.write(0x1B); data.write(0x61); data.write(0x01)
         data.write("Thank You\n".toByteArray())
@@ -390,8 +387,7 @@ class PrintService : Service() {
         val timestamp = java.text.SimpleDateFormat("HH:mm:ss").format(Date())
         val line = "[$timestamp] $msg"
         logHandler.post {
-            // MainActivity will poll /status, but we could also broadcast
-            // For now just keep in memory; MainActivity polls /status
+            // MainActivity will poll /status
         }
     }
 }
