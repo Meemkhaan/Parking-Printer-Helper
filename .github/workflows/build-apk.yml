@@ -26,7 +26,7 @@ jobs:
           gradle-version: '8.7'
 
       - name: Build debug APK
-        run: ./gradlew :app:assembleDebug
+        run: gradle :app:assembleDebug
         working-directory: apk
         env:
           PRINT_HELPER_SECRET: ${{ secrets.PRINT_HELPER_SECRET }}
